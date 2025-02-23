@@ -1,0 +1,81 @@
+var str
+write "Hello, World!" to var:str
+var estr
+write "" to var:estr
+
+
+write "c" to REG_A
+copy var:str to REG_B
+copy var:estr to REG_C
+write OP_CONCAT_WITH to REG_OP
+cpu_exec
+copy REG_RES to var:str
+
+copy var:str to DISPLAY_BUFFER
+write COLOR_GREEN to DISPLAY_COLOR
+write OP_DISPLAY_LN to REG_OP
+cpu_exec
+
+write "c" to REG_A
+copy var:str to REG_B
+copy var:estr to REG_C
+write OP_CONCAT_WITH to REG_OP
+cpu_exec
+copy REG_RES to var:str
+
+copy var:str to DISPLAY_BUFFER
+write COLOR_CYAN to DISPLAY_COLOR
+write OP_DISPLAY_LN to REG_OP
+cpu_exec
+
+write "c" to REG_A
+copy var:str to REG_B
+copy var:estr to REG_C
+write OP_CONCAT_WITH to REG_OP
+cpu_exec
+copy REG_RES to var:str
+
+copy var:str to DISPLAY_BUFFER
+write COLOR_YELLOW to DISPLAY_COLOR
+write OP_DISPLAY_LN to REG_OP
+cpu_exec
+
+var strLen
+copy var:str to REG_A
+write OP_GET_LENGTH to REG_OP
+cpu_exec
+copy REG_RES to var:strLen
+
+copy var:strLen to DISPLAY_BUFFER
+write COLOR_YELLOW to DISPLAY_COLOR
+write OP_DISPLAY_LN to REG_OP
+cpu_exec
+
+copy var:str to REG_A
+write 1 to REG_B
+copy var:estr to REG_C
+copy var:estr to REG_D
+write OP_REPLACE_COLUMN to REG_OP
+cpu_exec
+copy REG_RES to var:str
+
+copy var:str to DISPLAY_BUFFER
+write COLOR_MAGENTA to DISPLAY_COLOR
+write OP_DISPLAY_LN to REG_OP
+cpu_exec
+
+copy var:str to REG_A
+write 1 to REG_B
+copy var:estr to REG_C
+copy var:estr to REG_D
+write OP_REPLACE_COLUMN to REG_OP
+cpu_exec
+copy REG_RES to var:str
+
+copy var:str to DISPLAY_BUFFER
+write COLOR_RED to DISPLAY_COLOR
+write OP_DISPLAY_LN to REG_OP
+cpu_exec
+
+write OP_HALT to REG_OP
+cpu_exec

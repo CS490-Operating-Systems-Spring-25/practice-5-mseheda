@@ -1,0 +1,184 @@
+label kernel_entry_point
+write "Enter a char to display and move (a / d / q to quit): " to DISPLAY_BUFFER
+write COLOR_WHITE to DISPLAY_COLOR
+write OP_DISPLAY_LN to REG_OP
+cpu_exec
+
+var emptyStr
+write "" to var:emptyStr
+
+var bgcolor
+write "c" to var:bgcolor
+var i
+var currStr
+var endAddr
+
+copy FREE_MEMORY_END to REG_A
+write OP_INCR to REG_OP
+cpu_exec
+copy REG_RES to var:sys_stack_ptr
+
+copy PROGRAM_COUNTER to var:sys_return
+jump label:write_bitmap_to_frmem
+
+
+label read_char
+    write KEYBOARD_READ_CHAR_SILENTLY to REG_A
+    write OP_READ_INPUT to REG_OP
+    cpu_exec
+
+    copy KEYBOARD_BUFFER to REG_A
+    write "q" to REG_B
+    write OP_CMP_EQ to REG_OP
+    cpu_exec
+    jump_if label:kernel_exit
+
+    copy KEYBOARD_BUFFER to REG_A
+    write "a" to REG_B
+    write OP_CMP_EQ to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump_if label:a_pressed
+
+    copy KEYBOARD_BUFFER to REG_A
+    write "d" to REG_B
+    write OP_CMP_EQ to REG_OP
+    cpu_exec
+    copy PROGRAM_COUNTER to var:sys_return
+    jump_if label:d_pressed
+
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:print_bitmap
+
+    jump label:read_char
+
+label d_pressed
+    copy PROGRAM_COUNTER to var:sys_stack_return
+    jump label:sys_stack_push
+    
+    write 0 to var:i
+    label d_pressed_loop
+        copy var:i to REG_A
+        write 7 to REG_B
+        write OP_CMP_LT to REG_OP
+        cpu_exec
+        jump_if_not label:sys_stack_pop
+        
+        copy FREE_MEMORY_START to REG_A
+        copy var:i to REG_B
+        write OP_ADD to REG_OP
+        cpu_exec
+
+        copy var:bgcolor to REG_A
+        copy *REG_RES to REG_B
+        copy var:emptyStr to REG_C
+        write OP_CONCAT_WITH to REG_OP
+        cpu_exec
+        copy REG_RES to var:currStr
+
+        copy FREE_MEMORY_START to REG_A
+        copy var:i to REG_B
+        write OP_ADD to REG_OP
+        cpu_exec
+        copy var:currStr to *REG_RES
+
+        copy var:i to REG_A
+        write OP_INCR to REG_OP
+        cpu_exec
+        copy REG_RES to var:i
+
+        jump label:d_pressed_loop
+
+label a_pressed
+    copy PROGRAM_COUNTER to var:sys_stack_return
+    jump label:sys_stack_push
+    
+    write 0 to var:i
+    label a_pressed_loop
+        copy var:i to REG_A
+        write 7 to REG_B
+        write OP_CMP_LT to REG_OP
+        cpu_exec
+        jump_if_not label:sys_stack_pop
+        
+        copy FREE_MEMORY_START to REG_A
+        copy var:i to REG_B
+        write OP_ADD to REG_OP
+        cpu_exec
+
+        copy *REG_RES to REG_A
+        write 1 to REG_B
+        copy var:emptyStr to REG_C
+        copy var:emptyStr to REG_D
+        write OP_REPLACE_COLUMN to REG_OP
+        cpu_exec
+        copy REG_RES to var:currStr
+
+        copy FREE_MEMORY_START to REG_A
+        copy var:i to REG_B
+        write OP_ADD to REG_OP
+        cpu_exec
+        copy var:currStr to *REG_RES
+
+        copy var:i to REG_A
+        write OP_INCR to REG_OP
+        cpu_exec
+        copy REG_RES to var:i
+
+        jump label:a_pressed_loop
+
+label kernel_exit
+    write OP_HALT to REG_OP
+    cpu_exec
+
+label write_bitmap_to_frmem
+    copy PROGRAM_COUNTER to var:sys_stack_return
+    jump label:sys_stack_push
+    
+    write "cccccccccccrrrrrcccccccccccc" to *FREE_MEMORY_START
+    copy FREE_MEMORY_START to REG_A
+    write OP_INCR to REG_OP
+    cpu_exec
+    write "ccccccccccrrrrrrrrrccccccccc" to *REG_RES
+    copy REG_RES to REG_A
+    write OP_INCR to REG_OP
+    cpu_exec
+    write "ccccccccccbbbyybyccccccccccc" to *REG_RES
+    copy REG_RES to REG_A
+    write OP_INCR to REG_OP
+    cpu_exec
+    write "cccccccccbybyyybyyyccccccccc" to *REG_RES
+    copy REG_RES to REG_A
+    write OP_INCR to REG_OP
+    cpu_exec
+    write "cccccccccbybbyyybyyycccccccc" to *REG_RES
+    copy REG_RES to REG_A
+    write OP_INCR to REG_OP
+    cpu_exec
+    write "cccccccccbbyyyybbbbccccccccc" to *REG_RES
+    copy REG_RES to REG_A
+    write OP_INCR to REG_OP
+    cpu_exec
+    write "cccccccccccyyyyyyycccccccccc" to *REG_RES
+    
+    jump label:sys_stack_pop
+
+label print_bitmap
+    copy PROGRAM_COUNTER to var:sys_stack_return
+    jump label:sys_stack_push
+
+    write COLOR_CYAN to DISPLAY_BACKGROUND
+    write OP_SET_BACKGROUND_COLOR to REG_OP
+    cpu_exec
+
+    copy FREE_MEMORY_START to REG_A
+    write 7 to REG_B
+    write OP_ADD to REG_OP
+    cpu_exec
+    copy REG_RES to var:endAddr
+    
+    copy FREE_MEMORY_START to REG_A
+    copy var:endAddr to REG_B
+    write OP_RENDER_BITMAP to REG_OP
+    cpu_exec
+    jump label:sys_stack_pop

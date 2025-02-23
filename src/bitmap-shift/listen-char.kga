@@ -1,0 +1,35 @@
+write "Enter a char to display (q to quit): " to DISPLAY_BUFFER
+write COLOR_WHITE to DISPLAY_COLOR
+write OP_DISPLAY_LN to REG_OP
+cpu_exec
+
+var str
+write "" to var:str
+
+label read_char
+    write KEYBOARD_READ_CHAR_SILENTLY to REG_A
+    write OP_READ_INPUT to REG_OP
+    cpu_exec
+
+    copy KEYBOARD_BUFFER to REG_A
+    write "q" to REG_B
+    write OP_CMP_EQ to REG_OP
+    cpu_exec
+    jump_if label:kernel_exit
+
+    copy KEYBOARD_BUFFER to REG_B
+    copy var:str to REG_A
+    write "" to REG_C
+    write OP_CONCAT_WITH to REG_OP
+    cpu_exec
+    copy REG_RES to var:str
+
+    jump label:read_char
+
+label kernel_exit
+    copy var:str to DISPLAY_BUFFER
+    write COLOR_WHITE to DISPLAY_COLOR
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    write OP_HALT to REG_OP
+    cpu_exec
