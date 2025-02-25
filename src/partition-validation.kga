@@ -1,4 +1,8 @@
 label kernel_entry_point
+    copy FREE_MEMORY_END to REG_A
+    write OP_INCR to REG_OP
+    cpu_exec
+    copy REG_RES to var:sys_stack_ptr
 
     var dN
     var pN
@@ -13,6 +17,15 @@ label kernel_entry_point
     write "LAST_USABLE_BLOCK" to var:fsLastBl
     var fsEnd
     write "FS_HEADER_END" to var:fsEnd
+
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:fs_header_validation_Func
+
+    jump label:kernel_exit
+
+label fs_header_validation_Func
+    copy PROGRAM_COUNTER to var:sys_stack_return
+    jump label:sys_stack_push
 
     write ":) Welcome to partition validator!" to DISPLAY_BUFFER
     write OP_DISPLAY_LN to REG_OP
@@ -303,64 +316,64 @@ label kernel_entry_point
         write COLOR_GREEN to DISPLAY_COLOR
         write OP_DISPLAY_LN to REG_OP
         cpu_exec
-        jump label:kernel_end
+        jump label:sys_stack_pop
    
 label invalid_name
     write "Partition's name is invalid." to DISPLAY_BUFFER
     write COLOR_RED to DISPLAY_COLOR
     write OP_DISPLAY_LN to REG_OP
     cpu_exec
-    jump label:kernel_end
+    jump label:sys_stack_pop
 
 label invalid_boundaries
     write "Partition's boundaries are invalid." to DISPLAY_BUFFER
     write COLOR_RED to DISPLAY_COLOR
     write OP_DISPLAY_LN to REG_OP
     cpu_exec
-    jump label:kernel_end
+    jump label:sys_stack_pop
 
 label invalid_fs_header
     write "File system header is invalid." to DISPLAY_BUFFER
     write COLOR_RED to DISPLAY_COLOR
     write OP_DISPLAY_LN to REG_OP
     cpu_exec
-    jump label:kernel_end
+    jump label:sys_stack_pop
 
 label invalid_file_header
     write "File header is invalid." to DISPLAY_BUFFER
     write COLOR_RED to DISPLAY_COLOR
     write OP_DISPLAY_LN to REG_OP
     cpu_exec
-    jump label:kernel_end
+    jump label:sys_stack_pop
 
 label invalid_file_header_no_pair
     write "File header is invalid. No pair." to DISPLAY_BUFFER
     write COLOR_RED to DISPLAY_COLOR
     write OP_DISPLAY_LN to REG_OP
     cpu_exec
-    jump label:kernel_end
+    jump label:sys_stack_pop
 
 label invalid_block_boundaries
     write "Block boundaries are invalid" to DISPLAY_BUFFER
     write COLOR_RED to DISPLAY_COLOR
     write OP_DISPLAY_LN to REG_OP
     cpu_exec
-    jump label:kernel_end
+    jump label:sys_stack_pop
 
 label invalid_chmod_header
     write "Chmod header is invalid" to DISPLAY_BUFFER
     write COLOR_RED to DISPLAY_COLOR
     write OP_DISPLAY_LN to REG_OP
     cpu_exec
-    jump label:kernel_end
+    jump label:sys_stack_pop
 
 label error
     copy REG_ERROR to DISPLAY_BUFFER
     write COLOR_RED to DISPLAY_COLOR
     write OP_DISPLAY_LN to REG_OP
     cpu_exec
-    jump label:kernel_end
+    jump label:sys_stack_pop
 
-label kernel_end
+label kernel_exit
     write OP_HALT to REG_OP
     cpu_exec
