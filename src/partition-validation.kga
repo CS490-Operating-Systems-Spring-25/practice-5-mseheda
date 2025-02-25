@@ -1,0 +1,366 @@
+label kernel_entry_point
+
+    var dN
+    var pN
+    var head
+    var pStart
+    var pEnd
+    var endPartStr
+    write "END_PARTITION_TABLE" to var:endPartStr
+    var fsStart
+    write "FS_HEADER kagu_fs FIRST_USABLE_BLOCK " to var:fsStart
+    var fsLastBl
+    write "LAST_USABLE_BLOCK" to var:fsLastBl
+    var fsEnd
+    write "FS_HEADER_END" to var:fsEnd
+
+    write ":) Welcome to partition validator!" to DISPLAY_BUFFER
+    write OP_DISPLAY_LN to REG_OP
+    write COLOR_CYAN to DISPLAY_COLOR
+    cpu_exec
+    write " [kaguos@user] Enter the disk name: " to DISPLAY_BUFFER
+    write OP_DISPLAY to REG_OP
+    cpu_exec
+    write OP_READ_INPUT to REG_OP
+    cpu_exec
+    copy KEYBOARD_BUFFER to var:dN
+    write " [kaguos@user] Enter the partition name: " to DISPLAY_BUFFER
+    write OP_DISPLAY to REG_OP
+    cpu_exec
+    write OP_READ_INPUT to REG_OP
+    cpu_exec
+    copy KEYBOARD_BUFFER to var:pN
+
+    var extStr
+    var counter
+    write 3 to var:counter
+    label name_validation
+        copy var:counter to REG_A
+        write OP_INCR to REG_OP
+        cpu_exec
+        copy REG_RES to var:counter
+
+        copy var:dN to REG_A
+        copy var:counter to REG_B
+        write OP_READ_BLOCK to REG_OP
+        cpu_exec
+        jump_err label:error
+
+        copy REG_RES to REG_A
+        copy var:endPartStr to REG_B
+        write OP_CMP_EQ to REG_OP
+        cpu_exec
+        jump_if label:invalid_name
+
+        copy REG_A to var:extStr
+        write 2 to REG_B
+        write " " to REG_C
+        write OP_GET_COLUMN to REG_OP
+        cpu_exec
+        
+        copy REG_RES to REG_A
+        copy var:pN to REG_B
+        write OP_CMP_EQ to REG_OP
+        cpu_exec
+        jump_if_not label:name_validation
+
+        copy var:extStr to REG_A
+        write 4 to REG_B
+        write OP_GET_COLUMN to REG_OP
+        cpu_exec
+        copy REG_RES to var:pStart
+        write 6 to REG_B
+        cpu_exec
+        copy REG_RES to var:pEnd
+    
+    label partition_boundaries_validation
+        copy var:pStart to REG_A
+        copy var:pEnd to REG_B
+        write OP_CMP_LT to REG_OP
+        cpu_exec
+        jump_if_not label:invalid_boundaries
+
+    label fs_header_validation
+        copy var:dN to REG_A
+        copy var:pStart to REG_B
+        write OP_READ_BLOCK to REG_OP
+        cpu_exec
+        jump_err label:error
+        copy REG_RES to var:extStr
+
+        copy var:extStr to REG_A
+        copy var:fsStart to REG_B
+        write OP_STARTS_WITH to REG_OP
+        cpu_exec
+        jump_if_not label:invalid_fs_header
+
+        var fBlock
+        var lBlock
+        copy var:extStr to REG_A
+        write 4 to REG_B
+        write " " to REG_C
+        write OP_GET_COLUMN to REG_OP
+        cpu_exec
+
+        copy REG_RES to var:fBlock
+        write 5 to REG_B
+        cpu_exec
+        copy REG_RES to REG_A
+        copy var:fsLastBl to REG_B
+        write OP_CMP_EQ to REG_OP
+        cpu_exec
+        jump_if_not label:invalid_fs_header
+
+        copy var:extStr to REG_A
+        write 6 to REG_B
+        write OP_GET_COLUMN to REG_OP
+        cpu_exec
+        copy REG_RES to var:lBlock
+
+        copy var:fBlock to REG_A
+        copy var:lBlock to REG_B
+        write OP_CMP_LT to REG_OP
+        cpu_exec
+        jump_if_not label:invalid_block_boundaries
+
+        copy var:pStart to REG_A
+        copy var:fBlock to REG_B
+        write OP_CMP_LT to REG_OP
+        cpu_exec
+        jump_if_not label:invalid_block_boundaries
+
+        copy var:lBlock to REG_A
+        copy var:pEnd to REG_B
+        write OP_CMP_LE to REG_OP
+        cpu_exec
+        jump_if_not label:invalid_block_boundaries
+
+    copy var:pStart to var:counter
+    label header_validation
+        copy var:counter to REG_A
+        write OP_INCR to REG_OP
+        cpu_exec
+        copy REG_RES to var:counter
+
+        copy var:dN to REG_A
+        copy var:counter to REG_B
+        write OP_READ_BLOCK to REG_OP
+        cpu_exec
+        jump_err label:error
+        copy REG_RES to var:extStr
+
+        copy var:extStr to REG_A
+        write "" to REG_B
+        write OP_CMP_EQ to REG_OP
+        cpu_exec
+        jump_if label:header_validation
+
+        copy var:extStr to REG_A
+        copy var:fsEnd to REG_B
+        write OP_CMP_EQ to REG_OP
+        cpu_exec
+        jump_if label:validation_finished
+
+        var n1
+        var n2
+        var n3
+
+        copy var:extStr to REG_A
+        write 2 to REG_B
+        write " " to REG_C
+        write OP_GET_COLUMN to REG_OP
+        cpu_exec
+        copy REG_RES to var:n1
+
+        write 3 to REG_B
+        cpu_exec
+        copy REG_RES to var:n2
+
+        write 4 to REG_B
+        cpu_exec
+        copy REG_RES to var:n3
+
+        copy var:n1 to REG_A
+        write OP_IS_NUM to REG_OP
+        cpu_exec
+        jump_if_not label:invalid_chmod_header
+        copy var:n2 to REG_A
+        cpu_exec
+        jump_if_not label:invalid_chmod_header
+        copy var:n3 to REG_A
+        cpu_exec
+        jump_if_not label:invalid_chmod_header
+
+        copy var:n1 to REG_A
+        write 7 to REG_B
+        write OP_CMP_LE to REG_OP
+        cpu_exec
+        jump_if_not label:invalid_chmod_header
+
+        write 0 to REG_A
+        copy var:n1 to REG_B
+        write OP_CMP_LE to REG_OP
+        cpu_exec
+        jump_if_not label:invalid_chmod_header
+
+        copy var:n2 to REG_A
+        write 7 to REG_B
+        write OP_CMP_LE to REG_OP
+        cpu_exec
+        jump_if_not label:invalid_chmod_header
+
+        write 0 to REG_A
+        copy var:n2 to REG_B
+        write OP_CMP_LE to REG_OP
+        cpu_exec
+        jump_if_not label:invalid_chmod_header
+
+        copy var:n3 to REG_A
+        write 7 to REG_B
+        write OP_CMP_LE to REG_OP
+        cpu_exec
+        jump_if_not label:invalid_chmod_header
+
+        write 0 to REG_A
+        copy var:n3 to REG_B
+        write OP_CMP_LE to REG_OP
+        cpu_exec
+        jump_if_not label:invalid_chmod_header
+
+        copy var:extStr to REG_A
+        write 7 to REG_B
+        write OP_GET_COLUMN to REG_OP
+        cpu_exec
+        copy REG_RES to REG_A
+        write "BLOCKS" to REG_B
+        write OP_CMP_EQ to REG_OP
+        cpu_exec
+        jump_if_not label:invalid_file_header
+
+        var col
+        write 8 to var:col
+        label file_placement_validation
+            copy var:extStr to REG_A
+            copy var:col to REG_B
+            write OP_GET_COLUMN to REG_OP
+            cpu_exec
+            copy REG_RES to var:n1
+
+            copy var:n1 to REG_A
+            write "" to REG_B
+            write OP_CMP_EQ to REG_OP
+            cpu_exec
+            jump_if label:check_col_gt_8
+
+            write OP_IS_NUM to REG_OP
+            cpu_exec
+            jump_if_not label:invalid_file_header
+
+            copy var:col to REG_A
+            write OP_INCR to REG_OP
+            cpu_exec
+            copy REG_RES to var:col
+
+            copy var:extStr to REG_A
+            copy var:col to REG_B
+            write OP_GET_COLUMN to REG_OP
+            cpu_exec
+            copy REG_RES to var:n2
+
+            copy var:n2 to REG_A
+            write OP_IS_NUM to REG_OP
+            cpu_exec
+            jump_if_not label:invalid_file_header
+
+            write "" to REG_B
+            write OP_CMP_EQ to REG_OP
+            cpu_exec
+            jump_if label:invalid_file_header_no_pair //probably is_num enough to check that
+
+            copy var:col to REG_A
+            write OP_INCR to REG_OP
+            cpu_exec
+            copy REG_RES to var:col
+
+            copy var:n1 to REG_A
+            copy var:n2 to REG_B
+            write OP_CMP_LT to REG_OP
+            cpu_exec
+            jump_if_not label:invalid_file_header
+
+            jump label:file_placement_validation
+
+        label check_col_gt_8
+            copy 9 to REG_A
+            copy var:col to REG_B
+            write OP_CMP_LT to REG_OP
+            cpu_exec
+            jump_if label:header_validation
+            jump_if_not label:invalid_file_header_no_pair
+
+    label validation_finished
+        write "Partition is valid!" to DISPLAY_BUFFER
+        write COLOR_GREEN to DISPLAY_COLOR
+        write OP_DISPLAY_LN to REG_OP
+        cpu_exec
+        jump label:kernel_end
+   
+label invalid_name
+    write "Partition's name is invalid." to DISPLAY_BUFFER
+    write COLOR_RED to DISPLAY_COLOR
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    jump label:kernel_end
+
+label invalid_boundaries
+    write "Partition's boundaries are invalid." to DISPLAY_BUFFER
+    write COLOR_RED to DISPLAY_COLOR
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    jump label:kernel_end
+
+label invalid_fs_header
+    write "File system header is invalid." to DISPLAY_BUFFER
+    write COLOR_RED to DISPLAY_COLOR
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    jump label:kernel_end
+
+label invalid_file_header
+    write "File header is invalid." to DISPLAY_BUFFER
+    write COLOR_RED to DISPLAY_COLOR
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    jump label:kernel_end
+
+label invalid_file_header_no_pair
+    write "File header is invalid. No pair." to DISPLAY_BUFFER
+    write COLOR_RED to DISPLAY_COLOR
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    jump label:kernel_end
+
+label invalid_block_boundaries
+    write "Block boundaries are invalid" to DISPLAY_BUFFER
+    write COLOR_RED to DISPLAY_COLOR
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    jump label:kernel_end
+
+label invalid_chmod_header
+    write "Chmod header is invalid" to DISPLAY_BUFFER
+    write COLOR_RED to DISPLAY_COLOR
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    jump label:kernel_end
+
+label error
+    copy REG_ERROR to DISPLAY_BUFFER
+    write COLOR_RED to DISPLAY_COLOR
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+    jump label:kernel_end
+
+label kernel_end
+    write OP_HALT to REG_OP
+    cpu_exec
