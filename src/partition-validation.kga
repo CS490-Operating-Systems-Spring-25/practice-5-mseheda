@@ -155,6 +155,12 @@ label fs_header_validation_Func
         cpu_exec
         copy REG_RES to var:counter
 
+        copy var:counter to REG_A
+        copy var:fBlock to REG_B
+        write OP_CMP_LT to REG_OP
+        cpu_exec
+        jump_if_not label:invalid_boundaries
+
         copy var:dN to REG_A
         copy var:counter to REG_B
         write OP_READ_BLOCK to REG_OP
