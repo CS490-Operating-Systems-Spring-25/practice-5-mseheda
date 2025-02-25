@@ -1,0 +1,38 @@
+label kernel_entry_point
+    copy FREE_MEMORY_END to REG_A
+    write OP_INCR to REG_OP
+    cpu_exec
+    copy REG_RES to var:sys_stack_ptr
+
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:print_hello
+
+    write "1st call of func" to DISPLAY_BUFFER
+    write COLOR_GREEN to DISPLAY_COLOR
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+
+    copy PROGRAM_COUNTER to var:sys_return
+    jump label:print_hello
+    
+    write "2nd call of func" to DISPLAY_BUFFER
+    write COLOR_GREEN to DISPLAY_COLOR
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+
+    jump label:kernel_exit
+
+label print_hello
+    copy PROGRAM_COUNTER to var:sys_stack_return
+    jump label:sys_stack_push
+
+    write "Hello" to DISPLAY_BUFFER
+    write COLOR_GREEN to DISPLAY_COLOR
+    write OP_DISPLAY_LN to REG_OP
+    cpu_exec
+
+    jump label:sys_stack_pop
+
+label kernel_exit
+    write OP_HALT to REG_OP
+    cpu_exec
